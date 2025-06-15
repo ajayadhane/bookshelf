@@ -23,21 +23,15 @@ const BookForm = ({ open, onClose, onSubmit, initialData }) => {
   });
 
   useEffect(() => {
-    reset({
-      title: "",
-      author: "",
-      genre: "",
-      publishedYear: "",
-      status: "Available",
-      ...initialData,
-    });
-  }, [initialData, reset]);
+    if (open && initialData) {
+      reset(initialData);
+    } else {
+      reset(); 
+    }
+  }, [open, initialData, reset]);
 
   const submitHandler = (data) => {
-    if (initialData?._id) {
-      data._id = initialData._id;
-    }
-    onSubmit(data);
+    onSubmit({ ...initialData, ...data });
   };
 
   return (
@@ -46,51 +40,23 @@ const BookForm = ({ open, onClose, onSubmit, initialData }) => {
       <form onSubmit={handleSubmit(submitHandler)}>
         <DialogContent>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
-              <Controller
-                name="title"
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <TextField
-                    label="Title"
-                    fullWidth
-                    variant="outlined"
-                    {...field}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Controller
-                name="author"
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <TextField
-                    label="Author"
-                    fullWidth
-                    variant="outlined"
-                    {...field}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Controller
-                name="genre"
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <TextField
-                    label="Genre"
-                    fullWidth
-                    variant="outlined"
-                    {...field}
-                  />
-                )}
-              />
-            </Grid>
+            {["title", "author", "genre"].map((field) => (
+              <Grid key={field} item xs={12} sm={4}>
+                <Controller
+                  name={field}
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: f }) => (
+                    <TextField
+                      label={field.charAt(0).toUpperCase() + field.slice(1)}
+                      fullWidth
+                      variant="outlined"
+                      {...f}
+                    />
+                  )}
+                />
+              </Grid>
+            ))}
             <Grid item xs={12} sm={6}>
               <Controller
                 name="publishedYear"
@@ -120,8 +86,11 @@ const BookForm = ({ open, onClose, onSubmit, initialData }) => {
                     variant="outlined"
                     {...field}
                   >
-                    <MenuItem value="Available">Available</MenuItem>
-                    <MenuItem value="Issued">Issued</MenuItem>
+                    {["Available", "Issued"].map((s) => (
+                      <MenuItem key={s} value={s}>
+                        {s}
+                      </MenuItem>
+                    ))}
                   </TextField>
                 )}
               />

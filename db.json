@@ -1,0 +1,12 @@
+{
+  "books": [
+    {
+      "id": "2",
+      "title": "The Pragmatic Programmer",
+      "author": "Andrew Hunt",
+      "genre": "Programming",
+      "publishedYear": "2000",
+      "status": "Available"
+    }
+  ]
+}

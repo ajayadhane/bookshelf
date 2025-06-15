@@ -14,71 +14,65 @@ import {
   InputLabel,
   FormControl,
   Button,
+  Box,
+  Typography,
+  Chip,
 } from "@mui/material";
+import { Edit, Delete } from "@mui/icons-material";
 import { getBooks } from "../api/Books";
 
-const BookTable = ({ onEdit, onDelete }) => {
+const BookTable = ({ onEdit, onDelete, refreshKey }) => {
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [genreFilter, setGenreFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(0);
-
   const booksPerPage = 10;
 
   const fetchBooks = async () => {
-    try {
-      const { data } = await getBooks();
-      setBooks(data);
-      setFilteredBooks(data);
-    } catch (err) {
-      console.error("Error fetching books:", err);
-    }
+    const { data } = await getBooks();
+    setBooks(data);
   };
 
   useEffect(() => {
     fetchBooks();
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
-    let filtered = books;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (book) =>
-          book.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          book.author?.toLowerCase().includes(searchTerm.toLowerCase())
+    let result = books;
+    if (searchTerm)
+      result = result.filter(
+        (b) =>
+          b.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          b.author.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }
-
-    if (genreFilter) {
-      filtered = filtered.filter((book) => book.genre === genreFilter);
-    }
-
-    if (statusFilter) {
-      filtered = filtered.filter((book) => book.status === statusFilter);
-    }
-
-    setFilteredBooks(filtered);
+    if (genreFilter) result = result.filter((b) => b.genre === genreFilter);
+    if (statusFilter) result = result.filter((b) => b.status === statusFilter);
+    setFilteredBooks(result);
     setPage(0);
-  }, [searchTerm, genreFilter, statusFilter, books]);
+  }, [books, searchTerm, genreFilter, statusFilter]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  const handleChangePage = (_, newPage) => setPage(newPage);
 
   return (
     <>
-      <div style={{ display: "flex", gap: "1rem", margin: "1rem 0" }}>
+      <Box
+        display="flex"
+        gap={2}
+        flexWrap="wrap"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={2}
+      >
         <TextField
-          label="Search by Title or Author"
+          label="Search Title or Author"
           variant="outlined"
-          fullWidth
+          size="small"
           onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ flexGrow: 1, minWidth: 200 }}
         />
-
-        <FormControl fullWidth>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Genre</InputLabel>
           <Select
             value={genreFilter}
@@ -86,14 +80,14 @@ const BookTable = ({ onEdit, onDelete }) => {
             onChange={(e) => setGenreFilter(e.target.value)}
           >
             <MenuItem value="">All</MenuItem>
-            <MenuItem value="Fiction">Fiction</MenuItem>
-            <MenuItem value="Non-fiction">Non-fiction</MenuItem>
-            <MenuItem value="Sci-fi">Sci-fi</MenuItem>
-            <MenuItem value="Biography">Biography</MenuItem>
+            {["Fiction", "Non-fiction", "Sci‑fi", "Biography", "Programming"].map((g) => (
+              <MenuItem key={g} value={g}>
+                {g}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
-
-        <FormControl fullWidth>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Status</InputLabel>
           <Select
             value={statusFilter}
@@ -101,64 +95,75 @@ const BookTable = ({ onEdit, onDelete }) => {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <MenuItem value="">All</MenuItem>
-            <MenuItem value="Available">Available</MenuItem>
-            <MenuItem value="Issued">Issued</MenuItem>
+            {["Available", "Issued"].map((s) => (
+              <MenuItem key={s} value={s}>
+                {s}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
-      </div>
+      </Box>
 
       <TableContainer
         component={Paper}
         sx={{
-          borderRadius: 2,
-          boxShadow: 3,
+          borderRadius: 3,
+          boxShadow: 4,
           overflowX: "auto",
         }}
       >
         <Table>
-          <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+          <TableHead sx={{ backgroundColor: "#e3f2fd" }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold" }}>Title</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Author</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Genre</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Year</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+              {["Title", "Author", "Genre", "Year", "Status", "Actions"].map((h) => (
+                <TableCell key={h} sx={{ fontWeight: "bold" }}>
+                  {h}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredBooks
               .slice(page * booksPerPage, page * booksPerPage + booksPerPage)
-              .map((book, index) => (
+              .map((book) => (
                 <TableRow
-                  key={book._id}
+                  key={book.id}
                   sx={{
-                    backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                    transition: "all 0.2s ease",
                     "&:hover": {
-                      backgroundColor: "#e3f2fd",
+                      backgroundColor: "#f1f8ff",
                     },
                   }}
                 >
-                  <TableCell>{book.title}</TableCell>
+                  <TableCell>
+                    <Typography fontWeight={500}>{book.title}</Typography>
+                  </TableCell>
                   <TableCell>{book.author}</TableCell>
                   <TableCell>{book.genre}</TableCell>
                   <TableCell>{book.publishedYear}</TableCell>
-                  <TableCell>{book.status}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={book.status}
+                      color={book.status === "Available" ? "success" : "warning"}
+                      size="small"
+                    />
+                  </TableCell>
                   <TableCell>
                     <Button
                       onClick={() => onEdit(book)}
-                      variant="outlined"
-                      color="primary"
                       size="small"
+                      startIcon={<Edit />}
+                      variant="outlined"
+                      sx={{ mr: 1 }}
                     >
                       Edit
                     </Button>
                     <Button
                       onClick={() => onDelete(book)}
+                      size="small"
+                      startIcon={<Delete />}
                       variant="outlined"
                       color="error"
-                      size="small"
-                      sx={{ ml: 1 }}
                     >
                       Delete
                     </Button>
@@ -167,12 +172,11 @@ const BookTable = ({ onEdit, onDelete }) => {
               ))}
           </TableBody>
         </Table>
-
         <TablePagination
-          rowsPerPageOptions={[booksPerPage]}
           component="div"
           count={filteredBooks.length}
           rowsPerPage={booksPerPage}
+          rowsPerPageOptions={[booksPerPage]}
           page={page}
           onPageChange={handleChangePage}
         />
